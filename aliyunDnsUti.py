@@ -32,22 +32,35 @@ def list_domain():
 #get record name list by domain name
 def list_dns_record(DomainName):
     DomainRecords = DescribeDomainRecordsRequest.DescribeDomainRecordsRequest()
+    pageSize=100
+    recordsAll=[]
     DomainRecords.set_accept_format('json')
     DomainRecords.set_DomainName(DomainName)
+    DomainRecords.set_PageSize(pageSize)
     DomainRecordsJson = json.loads(client.do_action_with_exception(DomainRecords))
-    print(DomainName+':')
-#    print DomainRecordsJson
-    for x in DomainRecordsJson['DomainRecords']['Record']:
-         RecordId = x['RecordId']
-         RR = x['RR']
-         Type = x['Type']
-         Line = x['Line']
-         Value = x['Value']
-         TTL = x['TTL']
-         Status = x['Status']
-         txt =  RecordId+' '+RR+' '+Type+' '+Line+' '+Value+' '+str(TTL)+' '+Status
-         print(txt)
-    print('\n')
+    #print(DomainRecordsJson['PageNumber'])
+    #print(DomainRecordsJson['PageSize'])
+    totalCounts=DomainRecordsJson['TotalCount']
+    pageCounts=int(totalCounts / pageSize) + 1
+    print("get page counts:"+str(pageCounts))
+    for count in range(pageCounts):
+        print("\nget pagenumber: "+str(count+1)+" \n")
+        DomainRecords.set_PageNumber(count+1)
+        DomainRecordsJson = json.loads(client.do_action_with_exception(DomainRecords))
+        for x in DomainRecordsJson['DomainRecords']['Record']:
+            recordsAll.append(x)
+            RecordId = x['RecordId']
+            RR = x['RR']
+            Type = x['Type']
+            Line = x['Line']
+            Value = x['Value']
+            TTL = x['TTL']
+            Status = x['Status']
+            txt =  RR+' '+Type+' '+Line+' '+Value+' '+str(TTL)+' '+Status
+            print(txt)
+
+    print("\nall records number: "+str(len(recordsAll)))
+    return recordsAll
 
 
 
@@ -124,13 +137,8 @@ def checkRecord(recordName):
     print(domainName)
     #domainName='freidenker.tech'
     recordList=[]
-
-    DomainRecords = DescribeDomainRecordsRequest.DescribeDomainRecordsRequest()
-    DomainRecords.set_accept_format('json')
-    DomainRecords.set_DomainName(domainName)
-    DomainRecordsJson = json.loads(client.do_action_with_exception(DomainRecords))
-
-    for x in DomainRecordsJson['DomainRecords']['Record']:
+    all=list_dns_record(domainName)
+    for x in all:
         #RecordId = x['RecordId']
         RR = x['RR']
         #Type = x['Type']
