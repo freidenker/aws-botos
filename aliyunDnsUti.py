@@ -6,7 +6,7 @@ from datetime import datetime
 #import requests
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest, UpdateDomainRecordRequest, \
-    AddDomainRecordRequest, DescribeDomainsRequest
+    AddDomainRecordRequest, DescribeDomainsRequest, DeleteDomainRecordRequest
 
 #pip install aliyun-python-sdk-core-v3
 #pip install aliyun-python-sdk-domain
