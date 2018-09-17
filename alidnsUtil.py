@@ -153,7 +153,7 @@ def checkRecord(recordName):
     domainNameTwo=recordName.rsplit(".",2)[-2]
     recordRR=recordName.rsplit(".",2)[0]
     domainName=domainNameTwo+"."+domainNameOne
-    print("get this recods domamin name: " +domainName)
+    #print("get this recods domamin name: " +domainName)
 
     DomainList = DescribeDomainsRequest.DescribeDomainsRequest()
     DomainList.set_accept_format('json')
@@ -163,10 +163,10 @@ def checkRecord(recordName):
         domainList.append(i['DomainName'])
 
     if(domainName not in domainList):
-        print("error: this domain is Not yours")
+        print("error: this domain: "+ domainName +" is Not yours")
         sys.exit
     else:
-        print("the domain is yours")
+        #print("the domain is yours")
         DomainRecords = DescribeDomainRecordsRequest.DescribeDomainRecordsRequest()
         pageSize=100
         recordsAll=[]
@@ -187,7 +187,7 @@ def checkRecord(recordName):
             DomainRecordsJson = json.loads(client.do_action_with_exception(DomainRecords))
             for x in DomainRecordsJson['DomainRecords']['Record']:
                 recordsAll.append(x)
-        print("all records number: "+str(len(recordsAll)))
+        #print("all records number: "+str(len(recordsAll)))
         RRList=[]
 
         for x in recordsAll:
@@ -196,13 +196,14 @@ def checkRecord(recordName):
             RRList.append(RR)
 
         if(recordRR in RRList):
-            print(recordRR + " : already existed")
+            print(recordRR + " : already existed in "+ recordName)
             return True
         else:
-            print(recordRR + " : NOT exists")
+            print(recordRR + " : NOT exists in "+recordName)
             return False
 
 
+list_domain()
 
 #add_dns_record('freidenker.tech', 'test1', 'A', '10.12.1.0')
 #add_dns_record('freidenker.tech', 'test2', 'A', '10.12.1.1')
@@ -222,6 +223,3 @@ def checkRecord(recordName):
 
 #list_dns_record("freidenker.tech")
 
-checkRecord("freidenker.freidenker.tech")
-#add_dns_record('freidenker.tech', 'freidenker', 'A', '192.168.1.1')
-#delete_dns_record('freidenker.tech','freidenker')
