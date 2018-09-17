@@ -12,20 +12,22 @@ from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest, Upda
 #pip install aliyun-python-sdk-domain
 #pip install aliyun-python-sdk-alidns
 
-# create AcsClient instance
+
 ACCESS_KEY=os.environ['ACCESS_KEY']
 SECRET_KEY=os.environ['SECRET_KEY']
 client = AcsClient(ACCESS_KEY,SECRET_KEY,"cn-hangzhou");
-
 
 #get domamin name list
 def list_domain():
     DomainList = DescribeDomainsRequest.DescribeDomainsRequest()
     DomainList.set_accept_format('json')
     DNSListJson = json.loads(client.do_action_with_exception(DomainList))
+    domainList=[]
     for i in DNSListJson['Domains']['Domain']:
+        domainList.append(i['DomainName'])
         print(i['DomainName'])
     #print DNSListJson
+    return domainList
 
 
 
@@ -41,10 +43,14 @@ def list_dns_record(DomainName):
     #print(DomainRecordsJson['PageNumber'])
     #print(DomainRecordsJson['PageSize'])
     totalCounts=DomainRecordsJson['TotalCount']
-    pageCounts=int(totalCounts / pageSize) + 1
+    if(totalCounts % pageSize == 0):
+        pageCounts=int(totalCounts / pageSize)
+    else:
+        pageCounts=int(totalCounts / pageSize) + 1
+
     print("get page counts:"+str(pageCounts))
     for count in range(pageCounts):
-        print("\nget pagenumber: "+str(count+1)+" \n")
+        print("\nget records from pagenumber: "+str(count+1)+" \n")
         DomainRecords.set_PageNumber(count+1)
         DomainRecordsJson = json.loads(client.do_action_with_exception(DomainRecords))
         for x in DomainRecordsJson['DomainRecords']['Record']:
@@ -61,6 +67,18 @@ def list_dns_record(DomainName):
 
     print("\nall records number: "+str(len(recordsAll)))
     return recordsAll
+
+    #for item in recordsAll:
+    #    RecordId = item['RecordId']
+    #    RR = item['RR']
+    #    Type = item['Type']
+    #    Line = item['Line']
+    #    Value = item['Value']
+    #    TTL = item['TTL']
+    #    Status = item['Status']
+    #    txt =  RR+' '+Type+' '+Line+' '+Value+' '+str(TTL)+' '+Status
+    #    print(txt)
+
 
 
 
@@ -133,46 +151,83 @@ def set_dns_record(DomainName, hostname, status):
 def checkRecord(recordName):
     domainNameOne=recordName.rsplit(".",2)[-1]
     domainNameTwo=recordName.rsplit(".",2)[-2]
+    recordRR=recordName.rsplit(".",2)[0]
     domainName=domainNameTwo+"."+domainNameOne
-    print(domainName)
-    #domainName='freidenker.tech'
-    recordList=[]
-    all=list_dns_record(domainName)
-    for x in all:
-        #RecordId = x['RecordId']
-        RR = x['RR']
-        #Type = x['Type']
-        #Value = x['Value']
-        #Status = x['Status']
-        recordItem=RR+"."+domainName
-        recordList.append(recordItem)
-    if(recordName in recordList):
-        print(recordName + " : already existed")
-        return True
+    print("get this recods domamin name: " +domainName)
+
+    DomainList = DescribeDomainsRequest.DescribeDomainsRequest()
+    DomainList.set_accept_format('json')
+    DNSListJson = json.loads(client.do_action_with_exception(DomainList))
+    domainList=[]
+    for i in DNSListJson['Domains']['Domain']:
+        domainList.append(i['DomainName'])
+
+    if(domainName not in domainList):
+        print("error: this domain is Not yours")
+        sys.exit
     else:
-        print(recordName + " : NOT exists")
-        return False
+        print("the domain is yours")
+        DomainRecords = DescribeDomainRecordsRequest.DescribeDomainRecordsRequest()
+        pageSize=100
+        recordsAll=[]
+        DomainRecords.set_accept_format('json')
+        DomainRecords.set_DomainName(domainName)
+        DomainRecords.set_PageSize(pageSize)
+        DomainRecordsJson = json.loads(client.do_action_with_exception(DomainRecords))
+        #print(DomainRecordsJson['PageNumber'])
+        #print(DomainRecordsJson['PageSize'])
+        totalCounts=DomainRecordsJson['TotalCount']
+        if(totalCounts % pageSize == 0):
+            pageCounts=int(totalCounts / pageSize)
+        else:
+            pageCounts=int(totalCounts / pageSize) + 1
+
+        for count in range(pageCounts):
+            DomainRecords.set_PageNumber(count+1)
+            DomainRecordsJson = json.loads(client.do_action_with_exception(DomainRecords))
+            for x in DomainRecordsJson['DomainRecords']['Record']:
+                recordsAll.append(x)
+        print("all records number: "+str(len(recordsAll)))
+        RRList=[]
+
+        for x in recordsAll:
+            #RecordId = x['RecordId']
+            RR = x['RR']
+            RRList.append(RR)
+
+        if(recordRR in RRList):
+            print(recordRR + " : already existed")
+            return True
+        else:
+            print(recordRR + " : NOT exists")
+            return False
 
 
 
+
+#edit_dns_record('test.xin', 'test', 'test_ok', 'A', '120.*.*.123')
+#add_dns_record('test.xin', 'test', 'A', '120.*.*.123')
+#delete_dns_record('test.xin','test_ok')
+#set_dns_record('test.xin', 'test_ok', 'DISABLE')
+#set_dns_record('test.xin', 'test_ok', 'ENABLE')
 list_domain()
 
-#add_dns_record('freidenker.tech', 'test1', 'A', '10.x.1.0')
-#add_dns_record('freidenker.tech', 'test2', 'A', '10.x.1.1')
-#add_dns_record('freidenker.tech', 'test3', 'A', '10.x.1.2')
-#add_dns_record('freidenker.tech', 'test4', 'A', '10.x.1.3')
-#add_dns_record('freidenker.tech', 'test5', 'A', '10.x.1.4')
-#add_dns_record('freidenker.tech', 'test6', 'A', '10.x.1.5')
-#add_dns_record('freidenker.tech', 'test7', 'A', '10.x.1.6')
-#add_dns_record('freidenker.tech', 'test8', 'A', '10.x.1.7')
-#add_dns_record('freidenker.tech', 'test9', 'A', '10.x.1.8')
-#add_dns_record('freidenker.tech', 'test10', 'A', '10.x.1.9')
-#add_dns_record('freidenker.tech', 'test11', 'A', '10.x.1.10')
-#add_dns_record('freidenker.tech', 'test12', 'A', '10.x.1.11')
-#add_dns_record('freidenker.tech', 'test13', 'A', '10.x.1.12')
-#add_dns_record('freidenker.tech', 'test14', 'A', '10.x.1.13')
-#add_dns_record('freidenker.tech', 'test15', 'A', '10.x.1.14')
+#add_dns_record('freidenker.tech', 'test1', 'A', '10.12.1.0')
+#add_dns_record('freidenker.tech', 'test2', 'A', '10.12.1.1')
+#add_dns_record('freidenker.tech', 'test3', 'A', '10.12.1.2')
+#add_dns_record('freidenker.tech', 'test4', 'A', '10.12.1.3')
+#add_dns_record('freidenker.tech', 'test5', 'A', '10.12.1.4')
+#add_dns_record('freidenker.tech', 'test6', 'A', '10.12.1.5')
+#add_dns_record('freidenker.tech', 'test7', 'A', '10.12.1.6')
+#add_dns_record('freidenker.tech', 'test8', 'A', '10.12.1.7')
+#add_dns_record('freidenker.tech', 'test9', 'A', '10.12.1.8')
+#add_dns_record('freidenker.tech', 'test10', 'A', '10.12.1.9')
+#add_dns_record('freidenker.tech', 'test11', 'A', '10.12.1.10')
+#add_dns_record('freidenker.tech', 'test12', 'A', '10.12.1.11')
+#add_dns_record('freidenker.tech', 'test13', 'A', '10.12.1.12')
+#add_dns_record('freidenker.tech', 'test14', 'A', '10.12.1.13')
+#add_dns_record('freidenker.tech', 'test15', 'A', '10.12.1.14')
 
-list_dns_record("freidenker.tech")
+#list_dns_record("freidenker.tech")
 
-checkRecord("test3.freidenker.tech")
+checkRecord("test.freidenker.denk")
