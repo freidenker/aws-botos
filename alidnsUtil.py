@@ -222,4 +222,5 @@ list_domain()
 #add_dns_record('freidenker.tech', 'test15', 'A', '10.12.1.14')
 
 #list_dns_record("freidenker.tech")
+checkRecord("freidenker.freidenker.tech")
 
