@@ -16,7 +16,7 @@ ec2client = session.client('ec2')
 #ec2client = boto3.client('ec2')
 response = ec2client.describe_instances()
 for reservation in response["Reservations"]:
-    print str(len(reservation["Instances"])) + " is ec2 instances number"
+    print(str(len(reservation["Instances"])) + " is ec2 instances number")
     for instance in reservation["Instances"]:
         # This sample print will output entire Dictionary object
         #print(instance)

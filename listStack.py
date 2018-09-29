@@ -24,4 +24,4 @@ response_iterator = paginator.paginate(StackStatusFilter=['DELETE_COMPLETE','CRE
 for page in response_iterator:
     stack = page['StackSummaries']
     for output in stack:
-        print (output['StackName']+" : "+output['StackStatus'])
+        print(output['StackName']+" : "+output['StackStatus'])
